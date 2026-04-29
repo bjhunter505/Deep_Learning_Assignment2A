@@ -132,6 +132,14 @@ class Conv1d:
         for i in range(self.output_size):
             beg_index = i * self.stride
             end_index = beg_index + self.kernel_size
+            # The following line computes gradients for input data (dx) by performing a specialized matrix
+            # multiplication (tensor contraction) between incoming gradients and weights, adding the result
+            # to a specific, sliceable region of the total gradient array.
+            #
+            # delta[:, :, i]: represents the gradient flowing backward from the next layer.
+            #
+            # axes=([1], [0]): tells tensordot to sum the product of delta and weight along the 1st axis of delta
+            # and the 0th axis of self.weight.
             dx[:, :, beg_index:end_index] += np.tensordot(delta[:, :, i], self.weight, axes=([1], [0]))
             self.grad_weight += np.tensordot(delta[:, :, i].T, self.x[:, :, beg_index:end_index], axes=([1], [0]))
 
